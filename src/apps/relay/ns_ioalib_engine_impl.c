@@ -3636,26 +3636,28 @@ void turn_report_allocation_delete(void *a, SOCKET_TYPE socket_type) {
 #if !defined(TURN_NO_PROMETHEUS)
         {
           if (ss->realm_options.name[0]) {
-
             // Set prometheus traffic metrics
             prom_set_finished_traffic(ss->realm_options.name, (const char *)ss->username,
                                       (unsigned long)(ss->t_received_packets), (unsigned long)(ss->t_received_bytes),
-                                      (unsigned long)(ss->t_sent_packets), (unsigned long)(ss->t_sent_bytes), false);
+                                      (unsigned long)(ss->t_sent_packets), (unsigned long)(ss->t_sent_bytes), false,
+                                      socket_type);
             prom_set_finished_traffic(
                 ss->realm_options.name, (const char *)ss->username, (unsigned long)(ss->t_peer_received_packets),
                 (unsigned long)(ss->t_peer_received_bytes), (unsigned long)(ss->t_peer_sent_packets),
-                (unsigned long)(ss->t_peer_sent_bytes), true);
+                (unsigned long)(ss->t_peer_sent_bytes), true, socket_type);
           } else {
             // Set prometheus traffic metrics
             prom_set_finished_traffic(NULL, (const char *)ss->username, (unsigned long)(ss->t_received_packets),
                                       (unsigned long)(ss->t_received_bytes), (unsigned long)(ss->t_sent_packets),
-                                      (unsigned long)(ss->t_sent_bytes), false);
+                                      (unsigned long)(ss->t_sent_bytes), false, socket_type);
             prom_set_finished_traffic(NULL, (const char *)ss->username, (unsigned long)(ss->t_peer_received_packets),
                                       (unsigned long)(ss->t_peer_received_bytes),
                                       (unsigned long)(ss->t_peer_sent_packets), (unsigned long)(ss->t_peer_sent_bytes),
-                                      true);
+                                      true, socket_type);
           }
-          prom_dec_allocation(socket_type);
+          turn_time_t ct = get_turn_server_time(server);
+          ct = ct - ss->start_time;
+          prom_dec_allocation(socket_type, (unsigned long)ct);
         }
 #endif
       }

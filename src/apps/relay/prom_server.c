@@ -30,6 +30,8 @@ prom_counter_t *turn_total_traffic_peer_sentb;
 
 prom_gauge_t *turn_total_allocations;
 
+prom_histogram_t *turn_session_duration;
+
 void start_prometheus_server(void) {
   if (turn_params.prometheus == 0) {
     TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO, "prometheus collector disabled, not started\n");
@@ -37,8 +39,8 @@ void start_prometheus_server(void) {
   }
   prom_collector_registry_default_init();
 
-  const char *label[] = {"realm", NULL};
-  size_t nlabels = 1;
+  const char *label[] = {"realm", "type"};
+  size_t nlabels = 2;
 
   if (turn_params.prometheus_username_labels) {
     label[1] = "user";
@@ -98,6 +100,10 @@ void start_prometheus_server(void) {
   turn_total_allocations = prom_collector_registry_must_register_metric(
       prom_gauge_new("turn_total_allocations", "Represents current allocations number", 1, typeLabel));
 
+  prom_histogram_buckets_t* buckets = prom_histogram_buckets_new(4, 1.0, 60.0, 600.0, 3600.0);
+  turn_session_duration = prom_collector_registry_must_register_metric(
+      prom_histogram_new("turn_session_duration", "Records a histogram of TURN session duration", buckets, 0, NULL));
+
   promhttp_set_active_collector_registry(NULL);
 
   // some flags appeared first in microhttpd v0.9.53
@@ -132,12 +138,12 @@ void start_prometheus_server(void) {
 }
 
 void prom_set_finished_traffic(const char *realm, const char *user, unsigned long rsvp, unsigned long rsvb,
-                               unsigned long sentp, unsigned long sentb, bool peer) {
+                               unsigned long sentp, unsigned long sentb, bool peer, SOCKET_TYPE type) {
   if (turn_params.prometheus == 1) {
 
-    const char *label[] = {realm, NULL};
+    const char *label[] = {realm, socket_type_name(type), NULL};
     if (turn_params.prometheus_username_labels) {
-      label[1] = user;
+      label[2] = user;
     }
 
     if (peer) {
@@ -161,6 +167,7 @@ void prom_set_finished_traffic(const char *realm, const char *user, unsigned lon
       prom_counter_add(turn_total_traffic_sentp, sentp, NULL);
       prom_counter_add(turn_total_traffic_sentb, sentb, NULL);
     }
+
   }
 }
 
@@ -171,10 +178,12 @@ void prom_inc_allocation(SOCKET_TYPE type) {
   }
 }
 
-void prom_dec_allocation(SOCKET_TYPE type) {
+void prom_dec_allocation(SOCKET_TYPE type, unsigned long duration) {
+  TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO, "session duration %lu\n", duration);
   if (turn_params.prometheus == 1) {
     const char *label[] = {socket_type_name(type)};
     prom_gauge_dec(turn_total_allocations, label);
+    prom_histogram_observe(turn_session_duration, duration, NULL);
   }
 }
 
