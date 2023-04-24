@@ -538,7 +538,7 @@ const char *duration_name(unsigned long duration) {
     } else if (duration < 1800) {
         return "30mins";
     } else if (duration < 3600) {
-        return "1hrs";
+        return "1hr";
     } else if (duration < 14400) {
         return "4hrs";
     } else if (duration < 43200) {
