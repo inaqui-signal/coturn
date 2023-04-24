@@ -531,6 +531,10 @@ const char *socket_type_name(SOCKET_TYPE st) {
 const char *duration_name(unsigned long duration) {
     if (duration < 1) {
         return "1sec";
+    } else if (duration < 10) {
+        return "10sec";
+    } else if (duration < 30) {
+        return "30sec";
     } else if (duration < 60) {
         return "1min";
     } else if (duration < 600) {
