@@ -171,9 +171,9 @@ void prom_inc_allocation(SOCKET_TYPE type) {
   }
 }
 
-void prom_dec_allocation(SOCKET_TYPE type) {
+void prom_dec_allocation(SOCKET_TYPE type, unsigned long duration) {
   if (turn_params.prometheus == 1) {
-    const char *label[] = {socket_type_name(type)};
+    const char *label[] = {socket_type_name(type), duration_name(duration)};
     prom_gauge_dec(turn_total_allocations, label);
   }
 }
