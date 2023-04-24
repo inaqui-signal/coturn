@@ -530,23 +530,23 @@ const char *socket_type_name(SOCKET_TYPE st) {
 
 const char *duration_name(unsigned long duration) {
     if (duration < 1) {
-        return "<1sec";
+        return "1sec";
     } else if (duration < 60) {
-        return "<1min";
+        return "1min";
     } else if (duration < 600) {
-        return "<10mins";
+        return "10mins";
     } else if (duration < 1800) {
-        return "<30mins";
+        return "30mins";
     } else if (duration < 3600) {
-        return "<1hrs";
+        return "1hrs";
     } else if (duration < 14400) {
-        return "<4hrs";
+        return "4hrs";
     } else if (duration < 43200) {
-        return "<12hrs";
+        return "12hrs";
     } else if (duration < 86400) {
-        return "<24hrs";
+        return "24hrs";
     } else {
-        return ">=24hrs";
+        return "days";
     }
 }
 
